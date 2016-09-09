@@ -87,7 +87,37 @@ plotDaylength(bp2, "A", years = c(2013, 2014), new = T, color = 'purple', lwd = 
               refLines = TRUE, refLatitudes = c(11.5, 43.9))
 
 # Osprey
-plotDaylength(os2, "Belle", years = 2012, new = T, col = 'purple', lwd = 3, refLines = TRUE)
+os_summary = os2 %>% group_by(individual, year) %>%
+  summarize(latRange = max(lat, na.rm = T) - min(lat, na.rm = T), 
+            nRecs = n(), firstJD = min())
+
+
+record_threshold = 2000
+osp_inds = unique(os2$individual)
+
+pdf('figs/osprey_individuals.pdf', height = 8, width = 10)
+par(mfrow = c(3,4), mar = c(2.5, 2.5, 2.5, 1), oma = c(4, 4, 0, 0)) 
+panel = 0
+for (o in osp_inds) {
+  tmp = filter(os2, individual == o)
+  recs_by_year = tmp %>% group_by(year) %>% 
+    summarize(latRange = max(lat, na.rm = T) - min(lat, na.rm = T), 
+              nRecs = n())
+  recs_by_year$latRange[is.na(recs_by_year$latRange)] = 0
+  year = recs_by_year$year[recs_by_year$latRange == max(recs_by_year$latRange) &
+                             recs_by_year$nRecs >= record_threshold]
+  if (length(year) > 0) {
+    plotDaylength(os2, o, years = year, new = T, col = 'purple', lwd = 4, 
+                  refLines = TRUE, ref12hr = TRUE)
+    mtext(paste(o, year, sep = ', '), 3)
+    panel = panel+1
+    if (panel%%12 == 0) {
+      mtext("Julian day", 1, outer = TRUE, line = 1, cex = 2)
+      mtext("Day length (h)", 2, outer = TRUE, line = 1, cex = 2)
+    }
+  }
+}
+dev.off()
 
 
 # ---------------------------------------------------------------------------------
