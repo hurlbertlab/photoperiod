@@ -32,6 +32,7 @@ plotDaylength = function(data,              # preFormatted movement data
                          refLines = FALSE,  # include daylength at reference latitudes
                          refLatitudes = NULL,   # vector of min, max ref latitudes
                          ref12hr = FALSE,     # ref line for 12 hr photoperiod
+                         movingAvg = 1,     # number of days over which to calc a moving average
                          ...) {
   if (!is.null(individualID) & !is.null(years)) {
     temp = filter(data, individual == individualID, year %in% years)
@@ -44,11 +45,14 @@ plotDaylength = function(data,              # preFormatted movement data
   }
   temp = temp[order(temp$jd, decreasing = F),]
   maxDaylength = max(temp$daylength, na.rm = T)
-  if(new) {
+
+  temp$daylength = stats::filter(temp$daylength, rep(1/movingAvg, movingAvg), sides = 2)
+
+    if(new) {
     plot(temp$jd, temp$daylength, type = 'l', xlim = c(1, 365), ylim = c(9, maxDaylength + 2), 
          xlab = "Julian day", ylab = "Day length (h)", col = color, las = 1, ...)
   } else {
-    points(temp$jd, temp$daylength, type = 'l', ...)
+    points(temp$jd, temp$daylength, type = 'l', col = color, ...)
   }
   if (refLines) {
     if (is.null(refLatitudes)) {
@@ -152,3 +156,27 @@ for (s in splist) {
   }
 }
 dev.off()
+
+#--------------------------------------------------------------------------------
+# Comparing Blackpoll warbler eBird centroid to geolocated individuals
+
+blpw.cent = read.csv('data/ebird/Blackpoll_Warbler.csv', header = T)
+names(blpw.cent)[1] = 'jd'
+blpw.cent$daylength = daylength(blpw.cent$lat, blpw.cent$jd)
+
+# Centroid
+plotDaylength(blpw.cent, new = T, col = 'purple', lwd = 6, refLines = TRUE, ref12hr = TRUE)
+
+# Geolocated individuals
+plotDaylength(bp2, "A", years = c(2013, 2014), new = F, col = 'blue', lwd = 2, 
+              refLines = F, movingAvg = 10)
+plotDaylength(bp2, "B", years = c(2013, 2014), new = F, col = 'skyblue', lwd = 2, 
+              refLines = F, movingAvg = 10)
+plotDaylength(bp2, "E", years = c(2013, 2014), new = F, col = 'darkblue', lwd = 2, 
+              refLines = F, movingAvg = 20)
+# Reference lines for geolocated individuals
+points(1:365, daylength(12, 1:365), type = 'l', lty = 'dotted', lwd = 2, col = 'black')
+points(1:365, daylength(45, 1:365), type = 'l', lty = 'dotted', lwd = 2, col = 'gray50')
+text(330, 21.5, "Geolocation reference")
+text(30, 20.3, "Centroid reference")
+legend(300, 21.3, legend = c(45, 12), lty = 'dotted', lwd = 2, col = c('black', 'gray50'), bty = 'n')
