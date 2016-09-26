@@ -164,6 +164,9 @@ blpw.cent = read.csv('data/ebird/Blackpoll_Warbler.csv', header = T)
 names(blpw.cent)[1] = 'jd'
 blpw.cent$daylength = daylength(blpw.cent$lat, blpw.cent$jd)
 
+
+pdf('figs/ebird_v_geoloc_blackpoll.pdf', height = 5, width = 6)
+par(mar = c(4,4,1,1), oma = c(0,0,0,0), mgp = c(2.5, 1, 0))
 # Centroid
 plotDaylength(blpw.cent, new = T, col = 'purple', lwd = 6, refLines = TRUE, ref12hr = TRUE)
 
@@ -177,6 +180,7 @@ plotDaylength(bp2, "E", years = c(2013, 2014), new = F, col = 'darkblue', lwd = 
 # Reference lines for geolocated individuals
 points(1:365, daylength(12, 1:365), type = 'l', lty = 'dotted', lwd = 2, col = 'black')
 points(1:365, daylength(45, 1:365), type = 'l', lty = 'dotted', lwd = 2, col = 'gray50')
-text(330, 21.5, "Geolocation reference")
-text(30, 20.3, "Centroid reference")
-legend(300, 21.3, legend = c(45, 12), lty = 'dotted', lwd = 2, col = c('black', 'gray50'), bty = 'n')
+text(330, 21.5, "Geolocation")
+text(30, 19.5, "Centroid")
+legend(300, 21.3, legend = c(45, 12), lty = 'dotted', lwd = 2, col = c('gray50', 'black'), bty = 'n')
+dev.off()
