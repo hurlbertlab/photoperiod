@@ -10,13 +10,13 @@ library(dplyr)
 
 # preFormat takes a raw Movebank dataset and adds date, year, julian day, 
 # and daylength columns, and eliminates unneeded fields.
-preFormat = function(data) {
+preFormat = function(data, format = "%m/%d/%y %H:%M") {
   dataOut = select(data, individual.taxon.canonical.name, individual.local.identifier,
                    location.long, location.lat, timestamp)
-  dataOut$date = as.POSIXct(strptime(dataOut$timestamp, format = "%m/%d/%y %H:%M"))
+  dataOut$date = as.POSIXct(strptime(dataOut$timestamp, format = format))
   dataOut$jd = yday(dataOut$date)
   dataOut$daylength = daylength(dataOut$location.lat, dataOut$jd)
-  dataOut$year = format(dataOut$date, '%Y')
+  dataOut$year = as.numeric(format(dataOut$date, '%Y'))
   names(dataOut)[1:4] = c('species', 'individual', 'lon', 'lat')
   return(dataOut[, c('species', 'individual', 'lon', 'lat',
                      'date', 'jd', 'year', 'daylength')])
@@ -28,7 +28,7 @@ plotDaylength = function(data,              # preFormatted movement data
                          individualID = NULL,      # unique individual to plot
                          years = NULL,             # year or years of data to plot
                          new = TRUE,        # create new plot or add to existing
-                         color,             # color of experienced daylength line
+                         color = 'purple',             # color of experienced daylength line
                          refLines = FALSE,  # include daylength at reference latitudes
                          refLatitudes = NULL,   # vector of min, max ref latitudes
                          ref12hr = FALSE,     # ref line for 12 hr photoperiod
@@ -95,7 +95,6 @@ os_summary = os2 %>% group_by(individual, year) %>%
   summarize(latRange = max(lat, na.rm = T) - min(lat, na.rm = T), 
             nRecs = n(), firstJD = min())
 
-
 record_threshold = 2000
 osp_inds = unique(os2$individual)
 
@@ -122,6 +121,39 @@ for (o in osp_inds) {
   }
 }
 dev.off()
+
+
+# Swainson's hawk
+sw = read.csv("data/Swainson's Hawks.csv")
+swha = preFormat(dat, format = "%Y-%m-%d %H:%M:%S")
+
+rec_threshold = 50
+
+swct = count(swha, individual, year) %>%
+        group_by(individual) %>% 
+        summarize(ct = sum(n >= rec_threshold)) %>% 
+        filter(ct==2) %>% 
+        data.frame()
+
+sw_inds = swct$individual
+
+pdf('figs/swainsonshawk_individuals.pdf', height = 8, width = 10)
+par(mfrow = c(3,4), mar = c(2.5, 2.5, 2.5, 1), oma = c(4, 4, 0, 0)) 
+panel = 0
+for (s in sw_inds) {
+  tmp = filter(swha, individual == s)
+  plotDaylength(swha, s, years = unique(tmp$year), new = T, col = 'purple', lwd = 4, 
+                refLines = TRUE, ref12hr = TRUE)
+  mtext(paste(s, unique(tmp$year)[1], sep = ', '), 3)
+  panel = panel+1
+  if (panel%%12 == 0) {
+    mtext("Julian day", 1, outer = TRUE, line = 1, cex = 2)
+    mtext("Day length (h)", 2, outer = TRUE, line = 1, cex = 2)
+  }
+}
+dev.off()
+
+
 
 
 # ---------------------------------------------------------------------------------
