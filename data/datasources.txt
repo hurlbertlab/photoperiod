@@ -1,0 +1,4 @@
+# Data sources
+
+Argentine Barn Swallows-tracks.csv : Data from Winkler et al. 2017 from https://www.datarepository.movebank.org/handle/10255/move.655
+journal.pone.0129340.s001.xlsx : Data from Hobson et al. 2015 from http://journals.plos.org/plosone/article?id=10.1371/journal.pone.0129340#sec010
