@@ -154,6 +154,37 @@ for (s in sw_inds) {
 dev.off()
 
 
+# Argentine barn swallows
+# Swainson's hawk
+bs = read.csv("data/Argentine Barn Swallows-tracks.csv")
+basw = preFormat(bs, format = "%Y-%m-%d %H:%M:%S")
+
+rec_threshold = 300
+
+bsct = count(basw, individual, year) %>%
+  group_by(individual) %>% 
+  summarize(ct = sum(n >= rec_threshold)) %>% 
+  data.frame()
+
+bs_inds = bsct$individual
+
+pdf('figs/barnswallows_arg_individuals.pdf', height = 8, width = 10)
+par(mfrow = c(3,3), mar = c(2.5, 2.5, 2.5, 1), oma = c(4, 4, 4, 0)) 
+panel = 0
+for (s in bs_inds) {
+  tmp = filter(basw, individual == s)
+  plotDaylength(basw, s, years = unique(tmp$year), new = T, col = 'purple', lwd = 4, 
+                refLines = TRUE, ref12hr = TRUE)
+  mtext(paste(s, unique(tmp$year)[1], sep = ', '), 3)
+  panel = panel+1
+  if (panel%%9 == 0) {
+    mtext("Julian day", 1, outer = TRUE, line = 1, cex = 2)
+    mtext("Day length (h)", 2, outer = TRUE, line = 1, cex = 2)
+  }
+}
+mtext("Argentine breeding barn swallows, Winkler et al. 2017", 3, cex = 2, outer = T, line = 1.5)
+dev.off()
+
 
 
 # ---------------------------------------------------------------------------------
